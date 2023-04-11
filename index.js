@@ -4,12 +4,10 @@ const mongoose = require("mongoose");
 const app = express();
 const Book = require("./models/bookSchema");
 
-
-
 app.use(bodyParser.json());
 
 // const AddDocuments=async()=>{
-    
+
 //     const books = [
 //         {
 //           title: 'The Hitchhiker\'s Guide to the Galaxy',
@@ -54,13 +52,28 @@ app.use(bodyParser.json());
 //           ]
 //         }
 //       ];
-  
+
 //       await Book.insertMany(books).then(()=>{
 //         console.log("Successfull document addition");
 //       });
 
 // }
 
+app.get("/api/pageCount", async (req, res, next) => {
+  try {
+    const result = await Book.aggregate([
+      {
+        $match: {
+          $or: [{ pageCount: { $gte: 200 } }, { price: { $lte: 10 } }],
+        },
+      },
+    ]);
+    res.json({ result });
+  } catch (err) {
+    console.log(err);
+    res.json({ message: "Something went wrong" });
+  }
+});
 
 mongoose
   .connect(
@@ -73,8 +86,4 @@ mongoose
     console.log(err);
   });
 
-
 //   AddDocuments();
-
-
-  
