@@ -75,6 +75,59 @@ app.get("/api/pageCount", async (req, res, next) => {
   }
 });
 
+app.get("/api/pageCount", async (req, res, next) => {
+  try {
+    const result = await Book.aggregate([
+      {
+        $match: {
+          $or: [{ pageCount: { $gte: 200 } }, { price: { $lte: 10 } }],
+        },
+      },
+    ]);
+    res.json({ result });
+  } catch (err) {
+    console.log(err);
+    res.json({ message: "Something went wrong" });
+  }
+});
+
+app.get("/api/appendSpam", async (req, res, next) => {
+  try {
+    const result = await Book.aggregate([
+      {
+        $addFields: {
+          //this is actually reassigning the value of reviews, if the name was different then it would add a new field and not change the value of reviews
+          reviews: {
+            $map: {
+              input: "$reviews", //map function will work on this array
+              as: "review", //name of each element in reviews
+              in: {
+                $mergeObjects: [
+                  //$mergeObjects merge key values of 2 or more objects into one
+                  "$$review", //$$ is used to give reference of the review element
+                  {
+                    spam: {
+                      $cond: {
+                        if: { $gte: ["$$review.rating", 3] },
+                        then: false,
+                        else: true,
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    ]);
+    res.json({ result });
+  } catch (err) {
+    console.log(err);
+    res.json({ message: "Something went wrong" });
+  }
+});
+
 mongoose
   .connect(
     `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.xvgrljc.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`
